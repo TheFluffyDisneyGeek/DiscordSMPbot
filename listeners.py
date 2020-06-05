@@ -4,7 +4,7 @@ from random import randint
 from mcstatus import MinecraftServer
 
 
-class botListeners(commands.Cog,name = "Bot Listeners"):
+class botListeners(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
@@ -18,7 +18,7 @@ class botListeners(commands.Cog,name = "Bot Listeners"):
 
   @commands.Cog.listener()
   async def on_message(self,message):
-    if "no u" in message.content and message.author !=self.bot.user:
+    if "no u" in message.content and message.author != self.bot.user:
       await message.channel.send("no u")
     if randint(1,5) == 1:
       server = MinecraftServer.lookup("quacksmp.online")
@@ -34,7 +34,6 @@ class botListeners(commands.Cog,name = "Bot Listeners"):
         await self.bot.change_presence(status = discord.Status.idle,activity = game)
       else:
         await self.bot.change_presence(activity = game)
-    await self.bot.process_commands(message)
 
 
 def setup(bot):

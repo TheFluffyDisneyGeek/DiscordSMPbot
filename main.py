@@ -1,12 +1,9 @@
 import discord
 #import dryscrape
-import asyncio
-import os
-from random import randint
 from discord.ext import commands
 rebounding = 0
 import sys, traceback
-from mcstatus import MinecraftServer
+
 
 bot = commands.Bot(command_prefix="/")
 
@@ -18,10 +15,11 @@ initial_extensions = ['admin','minecraft','chat','listeners']
 if __name__ == '__main__':
     for extension in initial_extensions:
         try:
-            bot.load_extension(extension)
+          bot.load_extension(extension)
         except Exception as e:
-            print(f'Failed to load extension {extension}.', file=sys.stderr)
-            traceback.print_exc()
+        
+          print(f'Failed to load extension {extension}.', file=sys.stderr)
+          traceback.print_exc()
 
 
 @bot.event
@@ -31,6 +29,7 @@ async def on_ready():
     print(bot.user.id)
     print('copy paste this in your browser to authorize bot https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=268922066'.format(os.environ['CLIENTID']))
     print('------')
+
 
     
 bot.run(os.environ['TOKEN'], bot=True, reconnect=True)

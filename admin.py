@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 rebounding = 0
 
-class adminCommands(commands.Cog,name = "Admin Commands"):
+class adminCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 

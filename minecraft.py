@@ -14,7 +14,7 @@ endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
 theShops = [endShop]
 
 
-class mCommands(commands.Cog,name = "Minecraft related Commands"):
+class mCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 

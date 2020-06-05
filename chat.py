@@ -56,7 +56,7 @@ class chatCommands(commands.Cog,name = "Member commands"):
     await ctx.send(ctx.guild.icon_url)
 
   @commands.command(brief = "be happy", description = "No more sad :)")
-  async def sad(ctx):
+  async def sad(self,ctx):
     await ctx.message.delete()
     await ctx.channel.send("https://media1.tenor.com/images/04838d48fed5aa7cce9dd6501bf287db/tenor.gif?itemid=15565721")
 
