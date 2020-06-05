@@ -21,7 +21,7 @@ class mCommands(commands.Cog):
 
   @commands.command(brief = "Check Prices.",description = "Usage: /shop itemname. Will throw error if incorrect spelling.")
   async def shop(self,ctx,*,arg):
-    ad = ["Want it delivered? Order it through Telestia Now!™","Our iron is blast mined so you dont have to farm it! Come to Ferrous Stone Hold for all your needs!","Come explore Ferrous Stone Hold and its many nooks and crannies!"]
+    ad = ["insert ad here"]
     item = arg
     item = item.lower()
     found = []
@@ -45,7 +45,7 @@ class mCommands(commands.Cog):
     await ctx.send(embed = embed)
 
   @shop.error
-  async def shop(ctx,error):
+  async def shop_error(self,ctx,error):
     if isinstance(error, commands.MissingRequiredArgument):
       await ctx.send("You didn't say what you wanted! \n/shop all\n will show all shops.")
 
@@ -68,4 +68,4 @@ class mCommands(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(mCommands(bot))
+  bot.add_cog(mCommands(bot))
