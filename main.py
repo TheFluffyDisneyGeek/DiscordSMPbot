@@ -1,5 +1,6 @@
 import discord
 #import dryscrape
+import os
 from discord.ext import commands
 rebounding = 0
 import sys, traceback
