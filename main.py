@@ -4,6 +4,7 @@ import os
 from discord.ext import commands
 rebounding = 0
 import sys, traceback
+import keep_alive
 
 
 bot = commands.Bot(command_prefix="/")
@@ -32,5 +33,5 @@ async def on_ready():
     print('------')
 
 
-    
+keep_alive.keep_alive()    
 bot.run(os.environ['TOKEN'], bot=True, reconnect=True)
