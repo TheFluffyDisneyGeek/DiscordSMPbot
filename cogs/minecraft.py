@@ -14,9 +14,9 @@ pickledShops = {}
 theShops = []
 
 
-fluffShop = Shop("Fluffy's Shop",{"test":"1st|1d"}) #example shop
-endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
-theShops = [endShop]
+#fluffShop = Shop("Fluffy's Shop",{"test":"1st|1d"}) #example shop
+#endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
+#theShops = [endShop]
 
 
 
@@ -29,13 +29,15 @@ def dumpShops():
   print(theShops)
   for s in theShops:
     pickledShops.update({s.name:s.inventory})
-    with open("vars.txt", 'wb') as f:
-      pickle.dump(pickledShops, f)
+  with open("storedVariables/vars.txt", 'wb') as f:
+    pickle.dump(pickledShops, f) 
+  with open("storedVariables/backup.txt", 'wb') as f:
+    pickle.dump(pickledShops, f)
   print("shops dumped!")
 
 
 def loadShops():
-  with open("vars.txt", 'rb') as f:
+  with open("storedVariables/vars.txt", 'rb') as f:
     try:
       stuffs = pickle.load(f)
     except:

@@ -12,7 +12,7 @@ bot = commands.Bot(command_prefix="/")
 
 #https://gist.github.com/leovoel/46cd89ed6a8f41fd09c5
 
-initial_extensions = ['admin','minecraft','chat','listeners']
+initial_extensions = ['cogs.admin','cogs.minecraft','cogs.chat','cogs.listeners']
 
 if __name__ == '__main__':
   for extension in initial_extensions:
