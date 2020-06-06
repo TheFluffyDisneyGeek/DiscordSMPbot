@@ -1,4 +1,5 @@
 import discord
+import pickle 
 from discord.ext import commands
 from fuzzywuzzy import fuzz
 from random import randint
@@ -9,16 +10,71 @@ class Shop:
     self.name = name
     self.inventory = inventory_pricing
 
-#fluffShop = Shop("Fluffy's Shop",{"slimeballs":"1st|1d","bamboo":"2st|1d"}) (example shop)
+pickledShops = {}
+theShops = []
+
+
+fluffShop = Shop("Fluffy's Shop",{"test":"1st|1d"}) #example shop
 endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
 theShops = [endShop]
+
+
+
+def dumpShops():
+  file = open("vars.txt","r+")
+  file.truncate(0)
+  file.close()
+  global pickledShops
+  pickledShops = {}
+  print(theShops)
+  for s in theShops:
+    pickledShops.update({s.name:s.inventory})
+    with open("vars.txt", 'wb') as f:
+      pickle.dump(pickledShops, f)
+  print("shops dumped!")
+
+
+def loadShops():
+  with open("vars.txt", 'rb') as f:
+    try:
+      stuffs = pickle.load(f)
+    except:
+      dumpShops()
+      stuffs = pickle.load(f)
+    for s in stuffs:
+      print(s)
+      theShops.append(Shop(s,stuffs.get(s)))
+  print("Shops Loaded!")
+
+
+loadShops()
 
 
 class mCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
+  
+  
+  @commands.command()
+  async def makeshop(self,ctx,*args):
+    #await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
+    user_inventory = {}
+    try:
+      int(args[1]);args[int(args[1])+2]
+    except:
+      await ctx.send("ERROR: Incorrect format, or you did not supply needed arguments")
+      return
+    for i in range(2,(int(args[1]) * 2) + 1):
+      if i % 2 ==0:
+        try:
+          user_inventory.update({args[i]:args[i+1]})
+        except:
+          print("error," + str(i))
+    theShops.append(Shop(args[0],user_inventory))
+    dumpShops()
+    await ctx.send("Shop created!")
 
-
+    
   @commands.command(brief = "Check Prices.",description = "Usage: /shop itemname. Will throw error if incorrect spelling.")
   async def shop(self,ctx,*,arg):
     ad = ["insert ad here"]
