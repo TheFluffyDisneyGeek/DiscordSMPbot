@@ -21,7 +21,7 @@ theShops = []
 
 
 def dumpShops():
-  file = open("vars.txt","r+")
+  file = open("storedVariables/vars.txt","r+")
   file.truncate(0)
   file.close()
   global pickledShops

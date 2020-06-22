@@ -1,4 +1,5 @@
 import discord
+import datetime as dt
 from discord.ext import commands
 import asyncio
 class chatCommands(commands.Cog,name = "Member commands"):
@@ -43,7 +44,7 @@ class chatCommands(commands.Cog,name = "Member commands"):
 
   @commands.command(brief = "Suggest something", description = "No quotes anymore :)")
   async def suggest(self,ctx,*,arg):
-    suggestChan = self.bot.get_channel(709497001619751022)
+    suggestChan = self.bot.get_channel(723526695902117909)
     await ctx.message.delete()
     embed = discord.Embed(title = "New Suggestion!")
     embed.add_field(name = arg, value = "Vote using the emoji!")
