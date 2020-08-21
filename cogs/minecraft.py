@@ -1,5 +1,6 @@
 import discord
 import pickle 
+import json
 from discord.ext import commands
 from fuzzywuzzy import fuzz
 from random import randint
@@ -8,6 +9,7 @@ from mcstatus import MinecraftServer
 class Shop:
   def __init__(self, name, inventory_pricing): 
     self.name = name
+    #self.owner = owner
     self.inventory = inventory_pricing
 
 pickledShops = {}
@@ -15,8 +17,8 @@ theShops = []
 
 
 #fluffShop = Shop("Fluffy's Shop",{"test":"1st|1d"}) #example shop
-#endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
-#theShops = [endShop]
+endShop = Shop("End Shop",{"Elytra" : "1|25d","Shulker Boxes" : "1|1db"})
+theShops = []
 
 
 
@@ -25,24 +27,27 @@ def dumpShops():
   file.truncate(0)
   file.close()
   global pickledShops
+  print(pickledShops)
   pickledShops = {}
   print(theShops)
   for s in theShops:
     pickledShops.update({s.name:s.inventory})
-  with open("storedVariables/vars.txt", 'wb') as f:
-    pickle.dump(pickledShops, f) 
-  with open("storedVariables/backup.txt", 'wb') as f:
-    pickle.dump(pickledShops, f)
+  with open("storedVariables/vars.txt", 'w') as f:
+    f.write(json.dumps(pickledShops)) 
+  with open("storedVariables/backup.txt", 'w') as f:
+    f.write(json.dumps(pickledShops)) 
   print("shops dumped!")
 
 
 def loadShops():
-  with open("storedVariables/vars.txt", 'rb') as f:
+  with open("storedVariables/vars.txt", 'r') as f:
     try:
-      stuffs = pickle.load(f)
-    except:
+      stuffs = json.loads(f.read())
+      #e = ahbsgasljghaksl;dgklsdhgljas
+    except Exception as e:
+      print("YOU SHOULDN'T BE HERE")
       dumpShops()
-      stuffs = pickle.load(f)
+      stuffs = json.loads(f.read())
     for s in stuffs:
       print(s)
       theShops.append(Shop(s,stuffs.get(s)))
