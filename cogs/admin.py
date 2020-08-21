@@ -9,8 +9,8 @@ class adminCommands(commands.Cog):
 
 
   @commands.command(brief = "Admin: say something", description = "Say something") #say
-  @commands.has_any_role("Helper","Bot dev")
-  async def say(ctx,*,arg):
+  @commands.has_any_role("Helper","Ducko")
+  async def say(self,ctx,*,arg):
     await ctx.message.delete()
   
     await ctx.send(arg)
@@ -47,8 +47,8 @@ class adminCommands(commands.Cog):
 
 
   @commands.command(category = "Admin" ,brief = " Admin: Start a countdown", description = "Enter amount of hours for countdown.")
-  @commands.has_any_role("Helper","Bot dev")
-  async def countdown(ctx,arg):
+  @commands.has_any_role("Helper","Ducko")
+  async def countdown(self,ctx,arg):
     print("maybe working")
     global rebounding
     if rebounding == 1:
@@ -78,8 +78,8 @@ class adminCommands(commands.Cog):
 
 
   @commands.command()
-  @commands.has_any_role("Helper","Bot dev")
-  async def accept(ctx):
+  @commands.has_any_role("Helper","Ducko")
+  async def accept(self,ctx):
     welcome = ctx.message.mentions[0]
     embed = discord.Embed(name = "You were accepted!")
     embed.add_field(name = "You were accepted!",value = "Congratulations on being accepted! 🙂 Please read through the information channel before you join, and one of our admins will be on sometime soon to give you a tour and explain everything to you!")
@@ -92,8 +92,9 @@ class adminCommands(commands.Cog):
 
 
   @commands.command(brief = "Admin: accept suggestion", description = "/acceptsuggestion <messageid> <reason>")
-  @commands.has_any_role("Helper","Bot dev")
-  async def acceptsuggestion(ctx,arg1,*,args):
+  @commands.has_any_role("Helper","Ducko","Gamer")
+  async def acceptsuggestion(self,ctx,arg1,*,args):
+    print(arg1)
     await ctx.message.delete()
     delMessage = await ctx.fetch_message(int(arg1))
     oldSuggestion = delMessage.embeds[0].fields[0].name
@@ -103,8 +104,8 @@ class adminCommands(commands.Cog):
 
 
   @commands.command(brief = "Admin: deny suggestion", description = "/denysuggestion <id> <reason>")
-  @commands.has_any_role("Helper","Bot dev")
-  async def denysuggestion(ctx,arg1,*,args):
+  @commands.has_any_role("Helper","Ducko")
+  async def denysuggestion(self,ctx,arg1,*,args):
     await ctx.message.delete()
     delMessage = await ctx.fetch_message(int(arg1)) 
     oldSuggestion = delMessage.embeds[0].fields[0].name

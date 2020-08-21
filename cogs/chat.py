@@ -8,7 +8,7 @@ class chatCommands(commands.Cog,name = "Member commands"):
 
 
   @commands.command(brief = "Remove cursed", description = "Needs message id")
-  async def cursed(ctx, arg):
+  async def cursed(self,ctx, arg):
     msg = await ctx.send("Message reported as cursed. Need 3 reactions to purge")
     await msg.add_reaction("✔")
     await ctx.message.delete()

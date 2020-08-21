@@ -7,9 +7,9 @@ authors = ["repl.it user <replituser@example.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 mcstatus = "^3.1"
-discord = "^1.0"
 fuzzywuzzy = "^0.18.0"
 flask = "^1.1"
+"discord.py" = "^1.3.4"
 
 [tool.poetry.dev-dependencies]
 

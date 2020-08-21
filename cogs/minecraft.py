@@ -47,6 +47,7 @@ def loadShops():
       print(s)
       theShops.append(Shop(s,stuffs.get(s)))
   print("Shops Loaded!")
+  print(theShops)
 
 
 loadShops()
