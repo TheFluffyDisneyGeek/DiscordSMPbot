@@ -103,7 +103,7 @@ class mCommands(commands.Cog):
             owner_shops = [new_shop]
             theShops.append(new_shop)
             profiles.append(OwnerProfile(op.user_id, owner_shops))
-        theShops.append(Shop(args[0], user_inventory))
+        theShops.append(Shop(name, user_inventory))
         dumpshops()
         await ctx.send("Shop created!")
 
