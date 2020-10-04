@@ -1,5 +1,5 @@
 import discord
-import json
+import pickle
 from discord.ext import commands
 from fuzzywuzzy import fuzz
 from random import randint
@@ -7,66 +7,33 @@ from mcstatus import MinecraftServer
 
 
 class Shop:
-    def __init__(self, name, inventory_pricing):
+    def __init__(self, name, inventory_pricing, ownerid):
         self.name = name
         self.inventory = inventory_pricing
+        self.ownerid = ownerid
 
 
-class OwnerProfile:
-    def __init__(self, user_id, shops):
-        self.user_id = user_id
-        self.shops = shops
 
-
-output_json = {}
 theShops = []
 # fluffShop = Shop("Fluffy's Shop",{"test":"1st|1d"}) #example shop
-endShop = Shop("End Shop", {"Elytra": "1|25d", "Shulker Boxes": "1|1db"})
-profiles = []
+#endShop = Shop("End Shop", {"Elytra": "1|25d", "Shulker Boxes": "1|1db"})
 
 
-def dumpshops():
-    file = open("storedVariables/vars.txt", "r+")
-    file.truncate(0)
-    file.close()
-    global output_json
-    global profiles
-    output_json = {}
-    tempshop_dict = {}
-    print(theShops)
-    for op in profiles:
-        for s in op.shops:
-            tempshop_dict.update({s.name, s.inventory})
-        output_json.update({op: tempshop_dict})
-    with open("storedVariables/vars.txt", 'w') as f:
-        f.write(json.dumps(output_json))
-    with open("storedVariables/backup.txt", 'w') as f:
-        f.write(json.dumps(output_json))
-
-    '''for s in theShops:
-        pickledShops.update({s.name: s.inventory})
-    with open("storedVariables/vars.txt", 'w') as f:
-        f.write(json.dumps(pickledShops))
-    with open("storedVariables/backup.txt", 'w') as f:
-        f.write(json.dumps(pickledShops))'''
-    print("shops dumped!")
+def load_pickled_shops():
+    with open("storedVariables/vars.txt", 'rb') as f:
+        try:
+            stuffs = pickle.load(f)
+        except EOFError:
+            return []
+        return stuffs
 
 
-def loadshops():
-    with open("storedVariables/vars.txt", 'r') as f:
-        input_json = json.loads(f.read())
-        for op in input_json:
-            owner_shops = []
-            for s in op:
-                owner_shops.append(Shop(s, input_json.get(op).get(s)))
-            profiles.append(OwnerProfile(op, owner_shops))
-            for os in owner_shops:
-                theShops.append(os)
-    print("Shops Loaded!")
-    print(theShops)
+def dump_shop_list(sl):
+    with open("storedVariables/vars.txt", 'wb') as f:
+        pickle.dump(sl, f)
 
 
-loadshops()
+theShops = load_pickled_shops()
 
 
 class mCommands(commands.Cog):
@@ -74,7 +41,12 @@ class mCommands(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def makeshop(self, ctx, *, args):
+    async def makeshop(self, ctx, *, args):        
+        #TODO input validation and error msgs for args
+
+        args = args + "  "
+        # this is so it picks up the inputs correctly
+
         # await ctx.send('{} arguments: {}'.format(len(args), ', '.join(args)))
         atpos = args.find("#:")
         number = args[atpos + 2: args.find(" ", atpos)]
@@ -85,26 +57,21 @@ class mCommands(commands.Cog):
 
         atpos = args.find("#:")
         number = int(args[atpos + 2: args.find(" ", atpos)])
+        print("\n ---BEGIN DEBUG--- \n")
+        print(number)
         for i in range(1, number + 1):
+            print(i)
             atpos = args.find("i" + str(i) + ":")
             item = args[atpos + 3: args.find(" ", atpos)]
             atpos = args.find("p" + str(i) + ":")
             price = args[atpos + 3: args.find(" ", atpos)]
+
+            print(item + "\n" + price)
             user_inventory.update({item: price})
-        exists = False
-        for op in profiles:
-            if op.user_id == str(ctx.message.author.id):
-                exists = True
-                new_shop = Shop(name, user_inventory)
-                op.shops.append(new_shop)
-                theShops.append(new_shop)
-        if not exists:
-            new_shop = Shop(name, user_inventory)
-            owner_shops = [new_shop]
-            theShops.append(new_shop)
-            profiles.append(OwnerProfile(op.user_id, owner_shops))
-        theShops.append(Shop(name, user_inventory))
-        dumpshops()
+        print("----ADDING PROFILE----")
+        new_shop = Shop(name, user_inventory,ctx.message.author.id)
+        theShops.append(new_shop)
+        dump_shop_list(theShops)
         await ctx.send("Shop created!")
 
     @commands.command(brief="Check Prices.",

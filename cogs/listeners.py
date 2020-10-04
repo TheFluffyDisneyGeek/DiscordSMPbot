@@ -22,6 +22,7 @@ class botListeners(commands.Cog):
       await message.channel.send("no u")
     if randint(1,5) == 1:
       server = MinecraftServer.lookup("quacksmp.online")
+      status = server.status()
       try:
         status = server.status()
         print("The server has {0} players, and replied in {1} ms.".format(status.players.online,status.latency))

@@ -7,7 +7,7 @@ import sys, traceback
 import keep_alive
 
 
-bot = commands.Bot(command_prefix="/")
+bot = commands.Bot(command_prefix="!")
 
 
 #https://gist.github.com/leovoel/46cd89ed6a8f41fd09c5
