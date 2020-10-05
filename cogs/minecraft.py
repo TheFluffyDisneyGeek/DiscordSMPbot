@@ -74,6 +74,47 @@ class mCommands(commands.Cog):
         dump_shop_list(theShops)
         await ctx.send("Shop created!")
 
+    @commands.command()
+    async def editshop(self, ctx, *args):  
+        if len(args) < 2: # 0:shopname 1:command 2:itemname 3:price/delete
+            await ctx.send("You didn't provide a name and command")
+            return
+        for s in theShops:
+            print(str(s.ownerid == ctx.message.author.id))
+            print(str(s.name))
+            print(str(args[0]))
+            if s.name == args[0] and s.ownerid == ctx.message.author.id:
+                if args[1] == "delete":
+                    await ctx.send("Deleted shop: " + s.name)
+                    theShops.remove(s)
+                elif args[1] == "itemedit":                
+                    if len(args) < 4:
+                        await ctx.send("You didn't provide enough arguments! <itemname>   <updated price, or delete>")
+                    else:    
+                        if args[3] == "delete":
+                            if s.inventory.pop(args[2], 'error'):
+                                await ctx.send("Couldn't find that item!")
+                            else:
+                              await ctx.send("Item:" + args[2] + " deleted!")
+                        else:
+                            if args[2] in s.inventory:
+                                s.inventory[args[2]] = args[3]
+                                await ctx.send("Price of {} changed to {}!".format(args[2],args[3]))
+                            else:
+                                await ctx.send("Item not found!")
+                elif args[1] == "itemadd":
+                    if len(args) < 4:
+                        await ctx.send("You didn't provide enough arguments! <itemname>   <price>")
+                    else:
+                        s.inventory[args[2]] = args[3]
+                        await ctx.send("Item added!")
+                dump_shop_list(theShops)
+                return
+        await ctx.send("Couldn't find that shop or you don't own it!")
+
+                      
+
+            
     @commands.command(brief="Check Prices.",
                       description="Usage: /shop itemname. Will throw error if incorrect spelling.")
     async def shop(self, ctx, *, arg):
@@ -81,7 +122,7 @@ class mCommands(commands.Cog):
         item = arg
         item = item.lower()
         found = []
-        if arg == "all":
+        if item == "all":
             for shopObject in theShops:
                 for key in shopObject.inventory:
                     found.append(shopObject.name + " : " + key + " : " + shopObject.inventory[key])
@@ -107,7 +148,7 @@ class mCommands(commands.Cog):
 
     @commands.command(brief="QuackSMP Server Status", description="See if the QuackSMP Server is up")  # status
     async def status(self, ctx):
-        server = MinecraftServer.lookup("quacksmp.online")
+        server = MinecraftServer.lookup("play.quacksmp.com")
         try:
             status = server.status()
             await ctx.send(

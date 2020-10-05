@@ -21,7 +21,7 @@ class botListeners(commands.Cog):
     if "no u" in message.content and message.author != self.bot.user:
       await message.channel.send("no u")
     if randint(1,5) == 1:
-      server = MinecraftServer.lookup("quacksmp.online")
+      server = MinecraftServer.lookup("play.quacksmp.com")
       status = server.status()
       try:
         status = server.status()
