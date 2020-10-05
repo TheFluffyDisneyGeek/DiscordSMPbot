@@ -74,10 +74,11 @@ class mCommands(commands.Cog):
         dump_shop_list(theShops)
         await ctx.send("Shop created!")
 
-    @commands.command()
+    @commands.command(brief="Edit your shops",
+                      description="Usage: editshop <shopname> <action> actions: delete, itemedit, itemadd.")
     async def editshop(self, ctx, *args):  
         if len(args) < 2: # 0:shopname 1:command 2:itemname 3:price/delete
-            await ctx.send("You didn't provide a name and command")
+            await ctx.send("You didn't provide a name and action")
             return
         for s in theShops:
             print(str(s.ownerid == ctx.message.author.id))
