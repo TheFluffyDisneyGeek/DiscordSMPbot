@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from random import randint
 from mcstatus import MinecraftServer
-
+from admin import serverList
 
 class botListeners(commands.Cog):
   def __init__(self, bot):

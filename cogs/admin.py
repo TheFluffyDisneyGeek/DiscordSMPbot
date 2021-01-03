@@ -2,6 +2,15 @@ import discord
 from discord.ext import commands
 import asyncio
 rebounding = 0
+serverList = []
+
+class Server():
+  def __init__(self, serverid,serverip):
+    self.id = serverid
+    self.shopList = []
+    self.suggestionChannel = None
+    self.serverAddress = serverip
+    self.importantMessages = []
 
 class adminCommands(commands.Cog):
   def __init__(self, bot):
@@ -21,8 +30,12 @@ class adminCommands(commands.Cog):
     await ctx.message.delete()
     game = discord.Game(arg)
     await self.bot.change_presence(activity = game)
-
-
+  @commands.command(brief = "Setup server", description = "usage: /serverSetup <server ip>")
+  @commands.has_any_role("admin")
+  async def serverSetup(self,ctx,*,arg):
+    serverList.append(Server(ctx.guild.id,arg))
+    await ctx.send("Your server was successfully set up, with the ip" + arg)
+    
   @commands.command(category = "Admin" , brief = "Kick Newcomers", description = "Anyone with Newcomer role will be yeeted.")
   @commands.has_any_role("Helper")
   async def yeetmembers(self,ctx):
