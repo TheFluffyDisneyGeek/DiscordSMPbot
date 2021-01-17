@@ -1,2 +1,2 @@
-# discordDuckBot
-Discord bot for QuackSMP
+# SMPbot
+A simple Discord bot for Minecraft application based SMP servers

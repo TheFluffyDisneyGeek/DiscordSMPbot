@@ -1,26 +1,24 @@
 import discord
-#import dryscrape
+# import dryscrape
 import os
 from discord.ext import commands
-rebounding = 0
-import sys, traceback
+import traceback
 import keep_alive
 
 
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix="/")
 
 
-#https://gist.github.com/leovoel/46cd89ed6a8f41fd09c5
+# https://gist.github.com/leovoel/46cd89ed6a8f41fd09c5
 
-initial_extensions = ['cogs.admin','cogs.minecraft','cogs.chat','cogs.listeners']
+initial_extensions = ['cogs.admincommands', 'cogs.minecraft', 'cogs.chat', 'cogs.listeners']
 
 if __name__ == '__main__':
   for extension in initial_extensions:
       try:
         bot.load_extension(extension)
         print("loaded command {}".format(extension))
-      except Exception as e:        
-        
+      except Exception as e:
         #print('Failed to load extension {extension}.', file=sys.stderr)
         traceback.print_exc()
   print("loaded commands!")
