@@ -3,3 +3,4 @@ discord.py
 fuzzywuzzy~=0.18.0
 mcstatus~=4.0.0
 discord~=1.0.1
+python-dotenv~=0.15.0
