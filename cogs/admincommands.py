@@ -1,9 +1,10 @@
-import pickle
-
+import json
+from json.decoder import JSONDecodeError
 import discord
 from discord.ext import commands
 import asyncio
-
+import traceback
+import cogs.minecraft
 rebounding = 0
 
 
@@ -19,30 +20,70 @@ class Server:
 
 
 def load_everything() -> list:
-    with open("storedVariables/vars.txt", 'rb') as f:
+    with open("storedVariables/vars.txt", 'r') as f:
         try:
-            stuffs = pickle.load(f)
-        except EOFError:
+            jsonlist = json.load(f)  # python list of json values
+        except JSONDecodeError:
+            print("Error! Initializing empty list!")
             return []
-        return stuffs
+        print("Successfully loaded data")
+        python_server_list = []  # python list of python dict values
+        for jsonserver in jsonlist:
+            python_server_list.append(json.loads(jsonserver))
+        class_server_list = []  # python list of Server class values to return for the ServerList
+        for server_dict in python_server_list:
+            python_shop_list = []  # python list of python dict values for the shops
+            jsonshoplist = server_dict.get('shopList')  # python list, full of json
+            for jsonshop in jsonshoplist:
+                python_shop_list.append(json.loads(jsonshop))
+            class_shop_list = []  # python list of Shop class values for putting into the shop's attribute
+            for dict_shop in python_shop_list:
+                class_shop_list.append(cogs.minecraft.Shop(dict_shop.get('name'), dict_shop.get('inventory'), dict_shop.get('ownerid')))
+            init_server = Server(server_dict.get('id'))  # make a server for us to initialize all the stored values.
+            init_server.shopList = class_shop_list
+            init_server.appChannel = server_dict.get('appChannel')
+            init_server.suggestChannel = server_dict.get('suggestChannel')
+            init_server.serverAddress = server_dict.get('serverAddress')
+            init_server.importantMessages = server_dict.get('importantMessages')
+            init_server.applicationFormat = server_dict.get('applicationFormat')
+            class_server_list.append(init_server)
+            print("Server {0} Processed. \n AppChannel:{1} \n suggestChannel:{2} \n serverAddress:{3} \n ImportantMessages: {4} \napplicationFormat: {5}".format(init_server.id, init_server.appChannel, init_server.suggestChannel, init_server.serverAddress, init_server.importantMessages, init_server.applicationFormat))
+        return class_server_list
 
 
 def save_everything():
-    with open("storedVariables/vars.txt", 'wb') as f:
-        pickle.dump(serverList, f)
+    with open("storedVariables/vars.txt", 'w') as f:
+        alt_server_list = []
+        for serv in serverList:
+
+            alt_shop_list = []
+            print(serv.shopList)
+            if len(serv.shopList) > 0:
+                print("if shops aint setup, you shouldn't be here!")        
+                for shop in serv.shopList:
+                    alt_shop_list.append(json.dumps(shop.__dict__))
+            serv.shopList = alt_shop_list
+            alt_server_list.append(json.dumps(serv.__dict__))
+        try:    
+            json.dump(alt_server_list, f)
+        except:
+            print("An unexpected error has occured!")
+            traceback.print_exc()    
 
 
 def get_server(guild_id: int) -> Server:  # get the server, if not found make a new one, save and return new one
-    for server in serverList:
-        if server.id == guild_id:
-            return server
+    for serv in serverList:
+        if serv.id == guild_id:
+            return serv
     new_server = Server(guild_id)
     serverList.append(new_server)
-    save_everything()
     return new_server
 
 
 serverList = load_everything()
+print(serverList)
+for server in serverList:
+    print(server.shopList)
 
 
 class AdminCommands(commands.Cog):
@@ -53,7 +94,6 @@ class AdminCommands(commands.Cog):
     @commands.has_any_role("admin")
     async def say(self, ctx, *, arg):
         await ctx.message.delete()
-
         await ctx.send(arg)
 
     @commands.command(brief="Dev Only: set bot status", description="set status. will show Playing (status)")
@@ -74,15 +114,15 @@ class AdminCommands(commands.Cog):
     @setup.command()
     @commands.has_any_role("admin")
     async def ip(self, ctx, *, args):
-        server = get_server(ctx.guild.id)
-        server.serverAddress = args
-        await ctx.send("Server ip setup as:" + args[1])
+        serv = get_server(ctx.guild.id)
+        serv.serverAddress = args
+        await ctx.send("Server ip setup as:" + args)
         save_everything()
 
     @setup.command()
     @commands.has_any_role("admin")
     async def application(self, ctx: discord.ext.commands.Context):
-        server = get_server(ctx.guild.id)
+        serv = get_server(ctx.guild.id)
         question_list = []
         author = ctx.message.author
         embed = discord.Embed()
@@ -98,8 +138,8 @@ class AdminCommands(commands.Cog):
         await ctx.send(embed=embed)
         done = False
 
-        def check(user):
-            return user == author
+        def check(message):
+            return message.author == author and message.channel == ctx.channel
 
         while not done:
             await ctx.send("Please send your Question. you have 5 minutes.")
@@ -108,7 +148,7 @@ class AdminCommands(commands.Cog):
             except asyncio.TimeoutError:
                 await ctx.send("Timeout: please restart this process.")
                 return
-            if question == "FINISH":
+            if question.content == "FINISH":
                 break
 
             await ctx.send("Please send that question's context. you have 5 minutes.")
@@ -125,24 +165,24 @@ class AdminCommands(commands.Cog):
             except asyncio.TimeoutError:
                 await ctx.send("Timeout: please restart this process.")
                 return
-            question_list.append(question + ":" + context + ":" + conditions)
+            question_list.append(question.content + ":" + context.content + ":" + conditions.content)
 
-        server.applicationFormat = question_list
+        serv.applicationFormat = question_list
         await ctx.send("Application format has been set up!")
         save_everything()
 
     @setup.command()
     @commands.has_any_role("admin")
-    async def suggestchannel(self, ctx, arg: str):
-        server = get_server(ctx.guild.id)
-        if not arg:
+    async def suggestchannel(self, ctx, channel: str):
+        serv = get_server(ctx.guild.id)
+        if not channel:
             await ctx.send("You didn't send the id, or say \"here\" to use this channel!")
         else:
-            if arg.isdigit():
-                server.suggestChannel = self.bot.get_channel(int(arg))
-                await ctx.send("Successfully set to: " + self.bot.get_channel(int(arg)).name)
-            elif arg == "here":
-                server.suggestChannel = ctx.message.channel.id
+            if channel.isdigit():
+                serv.suggestChannel = self.bot.get_channel(int(channel))
+                await ctx.send("Successfully set to: " + self.bot.get_channel(int(channel)).name)
+            elif channel == "here":
+                serv.suggestChannel = ctx.message.channel.id
                 await ctx.send("Successfully set to: " + ctx.message.channel.name)
             else:
                 await ctx.send("That wasn't an id or here!")
@@ -151,16 +191,16 @@ class AdminCommands(commands.Cog):
 
     @setup.command()
     @commands.has_any_role("admin")
-    async def appchannel(self, ctx, arg: str):
-        server = get_server(ctx.guild.id)
-        if not arg:
+    async def appchannel(self, ctx, channel: str):
+        serv = get_server(ctx.guild.id)
+        if not channel:
             await ctx.send("You didn't send the id, or say \"here\" to use this channel!")
         else:
-            if arg.isdigit():
-                server.appChannel = self.bot.get_channel(int(arg))
-                await ctx.send("Successfully set to: " + self.bot.get_channel(int(arg)).name)
-            elif arg == "here":
-                server.appChannel = ctx.message.channel.id
+            if channel.isdigit():
+                serv.appChannel = self.bot.get_channel(int(channel))
+                await ctx.send("Successfully set to: " + self.bot.get_channel(int(channel)).name)
+            elif channel == "here":
+                serv.appChannel = ctx.message.channel.id
                 await ctx.send("Successfully set to: " + ctx.message.channel.name)
             else:
                 await ctx.send("That wasn't an id or here!")
@@ -169,14 +209,14 @@ class AdminCommands(commands.Cog):
 
     @setup.command()
     @commands.has_any_role("admin")
-    async def messages(self, ctx, arg: str):
-        server = get_server(ctx.guild.id)
+    async def messages(self, ctx, message: str):
+        serv = get_server(ctx.guild.id)
         options = ["welcome", "accept", "deny"]
 
         def check(user):
             return user == ctx.message.author
 
-        if not arg or arg not in options:
+        if not message or message not in options:
             await ctx.send("You didn't say what message you want to setup, or you didn't say an available one! "
                            "Availiable options: welcome, accept, deny")
             return
@@ -188,12 +228,12 @@ class AdminCommands(commands.Cog):
                 await ctx.send("Timeout: please restart this process.")
                 return
 
-            if arg == "welcome":
-                server.importantMessages.update({"welcome": msg})
-            elif arg == "accept":
-                server.importantMessages.update({"accept": msg})
-            elif arg == "deny":
-                server.importantMessages.update({"deny": msg})
+            if message == "welcome":
+                serv.importantMessages.update({"welcome": msg})
+            elif message == "accept":
+                serv.importantMessages.update({"accept": msg})
+            elif message == "deny":
+                serv.importantMessages.update({"deny": msg})
         save_everything()
 
     @commands.command(category="Admin", brief="Kick Newcomers", description="Anyone with Newcomer role will be yeeted.")
@@ -213,10 +253,7 @@ class AdminCommands(commands.Cog):
             await ctx.guild.kick(ctx.guild.get_member(member.id))
             print("kicked")
 
-    @yeetmembers.error
-    async def yeetmembers(self, ctx, error):
-        if isinstance(error, commands.MissingAnyRole):
-            await ctx.send("n o")
+
 
     @commands.command(category="Admin", brief=" Admin: Start a countdown",
                       description="Enter amount of hours for countdown.")
@@ -244,10 +281,6 @@ class AdminCommands(commands.Cog):
         await msg.delete()
         rebounding = 0
 
-    @countdown.error
-    async def countdown(self, ctx, error):
-        if isinstance(error, commands.MissingAnyRole):
-            await ctx.send("Incorrect Permissions")
 
     @commands.command()
     @commands.has_any_role("admin")
@@ -284,6 +317,14 @@ class AdminCommands(commands.Cog):
         newEmbed.add_field(name="Suggestion: " + oldSuggestion + " : denied!", value="Reason: " + args)
         await delMessage.edit(embed=newEmbed)
 
+    async def cog_command_error(self, ctx, error):
+        print("error")
+        if isinstance(error, commands.MissingAnyRole):
+            await ctx.send("You don't have permission to do that!")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You are missing required argument\"{}\"".format(error.param.name))
+        else:
+            await ctx.send(error.name)
 
 # https://gist.github.com/OneEyedKnight/f0411f9a5e9dea23b96be0bf6dd86d2d
 def setup(bot):

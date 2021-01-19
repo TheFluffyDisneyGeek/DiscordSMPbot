@@ -4,7 +4,8 @@ import os
 from discord.ext import commands
 import traceback
 import keep_alive
-
+from dotenv import load_dotenv
+load_dotenv(os.path.join('.env'))
 
 bot = commands.Bot(command_prefix="/")
 
@@ -29,9 +30,9 @@ async def on_ready():
   print('Logged in as')
   print(bot.user.name)
   print(bot.user.id)
-  print('copy paste this in your browser to authorize bot https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=268922066'.format(os.environ['CLIENTID']))
+  print('copy paste this in your browser to authorize bot https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=268922066'.format(os.getenv('CLIENTID')))
   print('------')
 
 
 keep_alive.keep_alive()    
-bot.run(os.environ['TOKEN'], bot=True, reconnect=True)
+bot.run(os.getenv('TOKEN'), bot=True, reconnect=True)

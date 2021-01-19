@@ -59,7 +59,7 @@ class ChatCommands(commands.Cog, name="General commands"):
     @commands.command()
     async def apply(self, ctx: discord.ext.commands.Context):
         server = admin.get_server(ctx.message.guild.id)
-        if not len(server.applicationFormat) > 0:
+        if not len(server.applicationFormat) > 0 or server.appChannel == None:
             await ctx.send("Uh oh. Applications have not been set up")
             return
         else:
@@ -68,6 +68,7 @@ class ChatCommands(commands.Cog, name="General commands"):
             full_application = []
 
             def check(message):
+                print(str(isinstance( message.channel,discord.channel.DMChannel)))
                 return message.author.id == applicant.id and isinstance(message.channel, discord.channel.DMChannel)
 
             embed = discord.Embed()
@@ -75,34 +76,59 @@ class ChatCommands(commands.Cog, name="General commands"):
                             value="To fill out your application, just answer the questions that are sent to you. You "
                                   "will have 5 minutes to answer each question. You have 5 minutes to reply \"START\" "
                                   "to begin.", inline=False)
-            await ctx.send(embed=embed)
+            await applicant.send(embed=embed)
             try:
                 context = await self.bot.wait_for("message", timeout=300.0, check=check)
             except asyncio.TimeoutError:
-                await ctx.send("Timeout: please restart this process.")
+                await applicant.send("Timeout: please restart this process.")
                 return
             await applicant.send("Starting!")
+            points_total = 0
+            points_earned = 0
             for msg in server.applicationFormat:
+                print(msg)
                 msg2 = str(msg)
-                msg2.split(":")
+                msg2 = msg2.split(":")
                 question = msg2[0]
-                context = msg2
+                context = msg2[1]
                 conditions = msg2[2:]
                 embed = discord.Embed()
                 embed.add_field(name=question,
                                 value=context, inline=False)
-                await ctx.send(embed=embed)
+                await applicant.send(embed=embed)
                 try:
                     response = await self.bot.wait_for("message", timeout=300.0, check=check)
                 except asyncio.TimeoutError:
-                    await ctx.send("Timeout: please restart this process.")
+                    await applicant.send("Timeout: please restart this process.")
                     return
-                full_application.append(question + ":" + response)
-            applicant.send("Thank you for filling out the form! Please await a response.")
+                msg_content = response.content    
+                possible_points = 0
+                pv_check = [i for i in conditions if "pv" in i]
+                len_check = [j for j in conditions if "t>" in j]
+                if len(pv_check) > 0: # pv#: point value of the question \n img:requires image to get points \n t>#      
+                    possible_points = int(pv_check[0][2:])
+                    points_total += possible_points
+                    print(possible_points)       
+                # todo make img and t> compatable    
+                if len(pv_check) > 0 and len(len_check) > 0:
+                    word_amount = int(len_check[0][2:])
+                    if len(response.content.split(" "))> word_amount:
+                        points_earned += possible_points
+                if "img" in conditions:
+                    if len(response.attachments) > 0:
+                        points_earned += possible_points
+                        for att in response.attachments:
+                            msg_content = msg_content + "\n [image](" + att.url +")"
+                            print(msg_content)
+                            print(att.url)
+                              
+                full_application.append(question + "|" + msg_content)
+            await applicant.send("Thank you for filling out the form! Please await a response.")
             embed = discord.Embed(title=applicant.name + "'s Application")
             for i in full_application:
-                i2 = i.split(":")
-                embed.add_field(name=i2[0], value=i2[1])
+                i2 = i.split("|")
+                embed.add_field(name=i2[0], value=i2[1], inline=False)
+            embed.set_footer(text=str.format("Automatic points: {}/{}",points_earned,points_total))
             await self.bot.get_channel(server.appChannel).send(embed=embed)
 
 

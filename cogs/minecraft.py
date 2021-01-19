@@ -1,11 +1,10 @@
-import pickle
 from random import randint
 import cogs.admincommands as admin
 import discord
 from discord.ext import commands
 from fuzzywuzzy import fuzz
 from mcstatus import MinecraftServer
-
+import asyncio
 
 class Shop:
     def __init__(self, name, inventory_pricing, ownerid):
@@ -23,8 +22,8 @@ class mCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def makeshop(self, ctx, *, args):
+    @commands.command(brief = "old shop system, command line style")
+    async def makeshopcli(self, ctx, *, args):
         # TODO input validation and error msgs for args
 
         args = args + "  "  # this is so it picks up the inputs correctly
@@ -49,6 +48,39 @@ class mCommands(commands.Cog):
         admin.get_server(ctx.guild.id).shopList.append(new_shop)
         admin.save_everything()
         await ctx.send("Shop created!")
+
+
+    @commands.command(brief = "create a shop. Requires name as argument!")
+    async def makeshop(self, ctx, name):
+        await ctx.send("Setting up a shop with the name of \"{}\"".format(name))
+        await ctx.send("It will ask for item name and price, reply FINISH to end.")
+        author = ctx.message.author
+
+        def check(message):
+            return message.author == author and message.channel == ctx.channel
+
+        user_inventory = {}
+        while True :
+            await ctx.send("Please send the item's name. You have 5 minutes.")
+            try:
+                item = await self.bot.wait_for("message", timeout=300.0, check=check)
+            except asyncio.TimeoutError:
+                await ctx.send("Timeout: please restart this process.")
+                return
+            if item.content == "FINISH":
+                break
+            await ctx.send("Please send the item's price. You have 5 minutes.")
+            try:
+                price = await self.bot.wait_for("message", timeout=300.0, check=check)
+            except asyncio.TimeoutError:
+                await ctx.send("Timeout: please restart this process.")
+                return
+            user_inventory.update({item.content: price.content})    
+        new_shop = Shop(name, user_inventory, ctx.message.author.id)
+        admin.get_server(ctx.guild.id).shopList.append(new_shop)
+        admin.save_everything()
+        await ctx.send("Shop created, with the name {}.".format(name))
+   
 
     @commands.command(brief="Edit your shops",
                       description="Usage: editshop <shopname> <action> actions: delete, itemedit, itemadd.")
@@ -94,7 +126,7 @@ class mCommands(commands.Cog):
                       description="Usage: /shop itemname. Will throw error if too incorrect spelling.")
     async def shop(self, ctx, *, arg):
         theShops = admin.get_server(ctx.guild.id).shopList
-        ad = ["insert ad here"]
+        ad = ["fluffy likes cookies. Please support him by getting cookies."]
         item = arg
         item = item.lower()
         found = []
@@ -124,14 +156,34 @@ class mCommands(commands.Cog):
 
     @commands.command(brief="Server Status", description="See if your Server is up!")  # status
     async def status(self, ctx):
+        print("command executed")
         server = MinecraftServer.lookup(admin.get_server(ctx.guild.id).serverAddress)
         try:
-            status = server.status()
-            await ctx.send(
-                "The server has {0} players, and replied in {1} ms.".format(status.players.online, status.latency))
-        except:
-            await ctx.send("Sorry, the server is offline, or the ip was setup incorrect! :(")
+            response = server.status()
+            embed = discord.Embed(title="The server replied in {0} ms.".format(response.latency), color=0x0099ff)
+            embed.add_field(name="Players: {}/{}".format(
+            response.players.online,
+            response.players.max),value = "--------------")
+            if response.players.sample != None:
+                for player in response.players.sample:
+                    embed.add_field(name=player.name,value = "--------------")
 
+            await ctx.send(embed=embed)
+            #await ctx.send(
+                #"The server has {0} players, and replied in {1} ms.".format(status.players.online, status.latency))
+            #await ctx.send(status.players)
+
+        except Exception as e:
+
+            await ctx.send("Sorry, the server is offline, or the ip was setup incorrect! :(")
+            await ctx.send(e)
+
+    async def cog_command_error(self, ctx, error):
+        if isinstance(error, commands.MissingAnyRole):
+            await ctx.send("You don't have permission to do that!")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You are missing required argument\"{}\"".format(error.param.name))
+  
 
 def setup(bot):
     bot.add_cog(mCommands(bot))
