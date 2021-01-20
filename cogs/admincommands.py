@@ -179,7 +179,7 @@ class AdminCommands(commands.Cog):
             await ctx.send("You didn't send the id, or say \"here\" to use this channel!")
         else:
             if channel.isdigit():
-                serv.suggestChannel = self.bot.get_channel(int(channel))
+                serv.suggestChannel = int(channel)
                 await ctx.send("Successfully set to: " + self.bot.get_channel(int(channel)).name)
             elif channel == "here":
                 serv.suggestChannel = ctx.message.channel.id
@@ -197,7 +197,7 @@ class AdminCommands(commands.Cog):
             await ctx.send("You didn't send the id, or say \"here\" to use this channel!")
         else:
             if channel.isdigit():
-                serv.appChannel = self.bot.get_channel(int(channel))
+                serv.appChannel = int(channel)
                 await ctx.send("Successfully set to: " + self.bot.get_channel(int(channel)).name)
             elif channel == "here":
                 serv.appChannel = ctx.message.channel.id

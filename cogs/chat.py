@@ -59,7 +59,7 @@ class ChatCommands(commands.Cog, name="General commands"):
     @commands.command()
     async def apply(self, ctx: discord.ext.commands.Context):
         server = admin.get_server(ctx.message.guild.id)
-        if not len(server.applicationFormat) > 0 or server.appChannel == None:
+        if not len(server.applicationFormat) > 0 or server.appChannel is None:
             await ctx.send("Uh oh. Applications have not been set up")
             return
         else:
@@ -68,7 +68,7 @@ class ChatCommands(commands.Cog, name="General commands"):
             full_application = []
 
             def check(message):
-                print(str(isinstance( message.channel,discord.channel.DMChannel)))
+                print(str(isinstance(message.channel, discord.channel.DMChannel)))
                 return message.author.id == applicant.id and isinstance(message.channel, discord.channel.DMChannel)
 
             embed = discord.Embed()
@@ -128,7 +128,7 @@ class ChatCommands(commands.Cog, name="General commands"):
             for i in full_application:
                 i2 = i.split("|")
                 embed.add_field(name=i2[0], value=i2[1], inline=False)
-            embed.set_footer(text=str.format("Automatic points: {}/{}",points_earned,points_total))
+            embed.set_footer(text=str.format("Automatic points: {}/{}", points_earned, points_total))
             await self.bot.get_channel(server.appChannel).send(embed=embed)
 
 

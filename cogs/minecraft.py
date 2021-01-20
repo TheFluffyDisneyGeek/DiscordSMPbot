@@ -163,7 +163,7 @@ class mCommands(commands.Cog):
             embed = discord.Embed(title="The server replied in {0} ms.".format(response.latency), color=0x0099ff)
             embed.add_field(name="Players: {}/{}".format(
             response.players.online,
-            response.players.max),value = "--------------")
+            response.players.max), value="--------------")
             if response.players.sample != None:
                 for player in response.players.sample:
                     embed.add_field(name=player.name,value = "--------------")
