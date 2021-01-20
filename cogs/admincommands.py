@@ -20,7 +20,7 @@ class Server:
 
 
 def load_everything() -> list:
-    with open("storedVariables/vars.txt", 'r') as f:
+    with open("storedVariables/vars.txt", 'r', encoding='utf-8') as f:
         try:
             jsonlist = json.load(f)  # python list of json values
         except JSONDecodeError:
@@ -52,23 +52,26 @@ def load_everything() -> list:
 
 
 def save_everything():
-    with open("storedVariables/vars.txt", 'w') as f:
+    with open("storedVariables/vars.txt", 'w', encoding='utf-8') as f:
         alt_server_list = []
         for serv in serverList:
-
             alt_shop_list = []
             print(serv.shopList)
             if len(serv.shopList) > 0:
-                print("if shops aint setup, you shouldn't be here!")        
                 for shop in serv.shopList:
                     alt_shop_list.append(json.dumps(shop.__dict__))
             serv.shopList = alt_shop_list
             alt_server_list.append(json.dumps(serv.__dict__))
+        with open("storedVariables/vars.txt", "r", encoding="utf-8") as f2:
+            backup = f2.read()
         try:    
             json.dump(alt_server_list, f)
-        except:
-            print("An unexpected error has occured!")
-            traceback.print_exc()    
+        except TypeError:
+            print("TypeError. Again.")
+            f.write(backup)
+            traceback.print_exc()
+        f2.close()
+        f.close()
 
 
 def get_server(guild_id: int) -> Server:  # get the server, if not found make a new one, save and return new one
@@ -81,9 +84,6 @@ def get_server(guild_id: int) -> Server:  # get the server, if not found make a 
 
 
 serverList = load_everything()
-print(serverList)
-for server in serverList:
-    print(server.shopList)
 
 
 class AdminCommands(commands.Cog):
@@ -325,6 +325,7 @@ class AdminCommands(commands.Cog):
             await ctx.send("You are missing required argument\"{}\"".format(error.param.name))
         else:
             await ctx.send(error)
+            traceback.print_exc()
 
 # https://gist.github.com/OneEyedKnight/f0411f9a5e9dea23b96be0bf6dd86d2d
 def setup(bot):
