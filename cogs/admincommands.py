@@ -324,7 +324,7 @@ class AdminCommands(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You are missing required argument\"{}\"".format(error.param.name))
         else:
-            await ctx.send(error.name)
+            await ctx.send(error)
 
 # https://gist.github.com/OneEyedKnight/f0411f9a5e9dea23b96be0bf6dd86d2d
 def setup(bot):
