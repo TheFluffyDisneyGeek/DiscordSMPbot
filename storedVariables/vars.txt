@@ -1,1 +1,1 @@
-["{\"id\": 737118399280316437, \"shopList\": [], \"appChannel\": 800208551464140830, \"suggestChannel\": null, \"serverAddress\": \"coronachillout.titanmc.io rieie disuid eueue\", \"importantMessages\": {}, \"applicationFormat\": []}"]
+
