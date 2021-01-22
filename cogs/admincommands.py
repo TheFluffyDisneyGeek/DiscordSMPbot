@@ -129,7 +129,7 @@ class AdminCommands(commands.Cog):
         embed.add_field(name="Application Setup",
                         value="Time to setup the application questions. It will ask for the question, then the "
                               "context (long explanation) and then for conditions. You can have multiple conditions, "
-                              "just separate them with a : To finish, answer FINISH")
+                              "just separate them with a : To finish, answer FINISH. The application can have at most 25 questions.")
         embed.add_field(name="Conditions",
                         value="pv#: point value of the question \n img:requires image to get points \n t>#: text must "
                               "be more than # words to get points.")
@@ -166,6 +166,9 @@ class AdminCommands(commands.Cog):
                 await ctx.send("Timeout: please restart this process.")
                 return
             question_list.append(question.content + ":" + context.content + ":" + conditions.content)
+            if len(question_list) == 25:
+                await ctx.send("You have reached the maximum amount of questions!")
+                break
 
         serv.applicationFormat = question_list
         await ctx.send("Application format has been set up!")

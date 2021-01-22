@@ -74,7 +74,7 @@ class ChatCommands(commands.Cog, name="General commands"):
             embed = discord.Embed()
             embed.add_field(name="Application",
                             value="To fill out your application, just answer the questions that are sent to you. You "
-                                  "will have 5 minutes to answer each question. You have 5 minutes to reply \"START\" "
+                                  "will have 5 minutes to answer each question. Your response cannot exceed 500 characters. You have 5 minutes to reply \"START\" "
                                   "to begin.", inline=False)
             await applicant.send(embed=embed)
             try:
@@ -92,20 +92,25 @@ class ChatCommands(commands.Cog, name="General commands"):
                 question = msg2[0]
                 context = msg2[1]
                 conditions = msg2[2:]
-                embed = discord.Embed()
-                embed.add_field(name=question,
-                                value=context, inline=False)
-                await applicant.send(embed=embed)
-                try:
-                    response = await self.bot.wait_for("message", timeout=300.0, check=check)
-                except asyncio.TimeoutError:
-                    await applicant.send("Timeout: please restart this process.")
-                    return
-                msg_content = response.content    
+                while True:
+                    embed = discord.Embed()
+                    embed.add_field(name=question,
+                                    value=context, inline=False)
+                    await applicant.send(embed=embed)
+                    try:
+                        response = await self.bot.wait_for("message", timeout=300.0, check=check)
+                    except asyncio.TimeoutError:
+                        await applicant.send("Timeout: please restart this process.")
+                        return
+                    msg_content = response.content
+                    if len(msg_content) > 500:
+                        await applicant.send("That was too long! Please reduce the character count to less than 500!")
+                    else:
+                        break
                 possible_points = 0
                 pv_check = [i for i in conditions if "pv" in i]
                 len_check = [j for j in conditions if "t>" in j]
-                if len(pv_check) > 0: # pv#: point value of the question \n img:requires image to get points \n t>#      
+                if len(pv_check) > 0:  # pv#: point value of the question \n img:requires image to get points \n t>#
                     possible_points = int(pv_check[0][2:])
                     points_total += possible_points
                     print(possible_points)       
@@ -124,12 +129,23 @@ class ChatCommands(commands.Cog, name="General commands"):
                               
                 full_application.append(question + "|" + msg_content)
             await applicant.send("Thank you for filling out the form! Please await a response.")
-            embed = discord.Embed(title=applicant.name + "'s Application")
+            title_embed = discord.Embed(title=applicant.name + "'s Application")
+            title_embed.set_footer(text=str.format("Automatic points: {}/{}", points_earned, points_total))
+            await self.bot.get_channel(server.appChannel).send(embed=title_embed)
+            message_length = 0
+            app_embed = discord.Embed()
             for i in full_application:
                 i2 = i.split("|")
-                embed.add_field(name=i2[0], value=i2[1], inline=False)
-            embed.set_footer(text=str.format("Automatic points: {}/{}", points_earned, points_total))
-            await self.bot.get_channel(server.appChannel).send(embed=embed)
+                if message_length + len(i) >= 5000:  # check if it goes over character limits, if so send and reset the embed
+                    message_length = 0
+                    await self.bot.get_channel(server.appChannel).send(embed=app_embed)
+                    app_embed = discord.Embed()
+                    app_embed.add_field(name=i2[0], value=i2[1], inline=False)
+                else:
+                    app_embed.add_field(name=i2[0], value=i2[1], inline=False)  # if it doesn't, just add it to the embed
+                    message_length += len(i)
+            if app_embed.fields != discord.Embed.Empty:
+                await self.bot.get_channel(server.appChannel).send(embed=app_embed)
 
 
     @commands.command(brief="be happy", description="No more sad :)")
