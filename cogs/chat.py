@@ -126,7 +126,7 @@ class ChatCommands(commands.Cog, name="General commands"):
                             msg_content = msg_content + "\n [image](" + att.url +")"
                             print(msg_content)
                             print(att.url)
-                              
+                            
                 full_application.append(question + "|" + msg_content)
             await applicant.send("Thank you for filling out the form! Please await a response.")
             title_embed = discord.Embed(title=applicant.name + "'s Application")

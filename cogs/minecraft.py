@@ -1,3 +1,4 @@
+import traceback
 from random import randint
 import cogs.admincommands as admin
 import discord
@@ -146,7 +147,7 @@ class mCommands(commands.Cog):
         if not found:
             embed.add_field(name="Error:", value="could not find item. doesn't exist or incorrect spelling.")
         if randint(1, 10) == 1:
-            embed.add_field(name="------", value=ad[randint(0, len(ad))])
+            embed.add_field(name="------", value=ad[randint(0, len(ad)-1)])
         await ctx.send(embed=embed)
 
     @shop.error
@@ -170,7 +171,7 @@ class mCommands(commands.Cog):
 
             await ctx.send(embed=embed)
             #await ctx.send(
-                #"The server has {0} players, and replied in {1} ms.".format(status.players.online, status.latency))
+            #"The server has {0} players, and replied in {1} ms.".format(status.players.online, status.latency))
             #await ctx.send(status.players)
 
         except Exception as e:
@@ -183,6 +184,9 @@ class mCommands(commands.Cog):
             await ctx.send("You don't have permission to do that!")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("You are missing required argument\"{}\"".format(error.param.name))
+        else:
+            await ctx.send(error)
+            traceback.print_exc()
   
 
 def setup(bot):

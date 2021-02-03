@@ -60,8 +60,10 @@ def save_everything():
             if len(serv.shopList) > 0:
                 for shop in serv.shopList:
                     alt_shop_list.append(json.dumps(shop.__dict__))
+            serv_shop_copy = serv.shopList  # this is to prevent shops from being a json string after save_everything()
             serv.shopList = alt_shop_list
             alt_server_list.append(json.dumps(serv.__dict__))
+            serv.shopList = serv_shop_copy
         with open("storedVariables/vars.txt", "r", encoding="utf-8") as f2:
             backup = f2.read()
         try:    
