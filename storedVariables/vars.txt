@@ -1,1 +1,0 @@
-["{\"id\": 687015464974549004, \"shopList\": [], \"appChannel\": 804376319583584286, \"suggestChannel\": null, \"serverAddress\": null, \"importantMessages\": {}, \"applicationFormat\": [\"Gimme number:No:skip\", \"Give me image:E:skip\"]}"]
