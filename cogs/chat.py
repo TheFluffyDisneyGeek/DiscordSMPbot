@@ -122,10 +122,10 @@ class ChatCommands(commands.Cog, name="General commands"):
                 if "img" in conditions:
                     if len(response.attachments) > 0:
                         points_earned += possible_points
-                        for att in response.attachments:
-                            msg_content = msg_content + "\n [image](" + att.url +")"
-                            print(msg_content)
-                            print(att.url)
+                for att in response.attachments:
+                    msg_content = msg_content + "\n [image](" + att.url +")"
+                    print(msg_content)
+                    print(att.url)
                             
                 full_application.append(question + "|" + msg_content)
             await applicant.send("Thank you for filling out the form! Please await a response.")
