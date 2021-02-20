@@ -44,7 +44,7 @@ class ChatCommands(commands.Cog, name="General commands"):
 
     @commands.command(brief="Suggest something", description="No quotes anymore :)")
     async def suggest(self, ctx, *, arg):
-        suggest_chan = self.bot.get_channel(admin.get_server(ctx.guild.id))
+        suggest_chan = self.bot.get_channel(admin.get_server(ctx.guild.id).suggestChannel)
         await ctx.message.delete()
         embed = discord.Embed(title="New Suggestion!")
         embed.add_field(name=arg, value="Vote using the emoji!")
