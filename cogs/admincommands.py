@@ -1,33 +1,31 @@
 import json
 from json.decoder import JSONDecodeError
+from typing import List
+import logging
+
 import discord
 from discord.ext import commands
 import asyncio
 import traceback
 import cogs.minecraft
+from objects import Server
+
 rebounding = 0
 
 
-class Server:
-    def __init__(self, serverid):
-        self.id = serverid
-        self.shopList = []
-        self.appChannel = None
-        self.suggestChannel = None
-        self.serverAddress = None
-        self.importantMessages = {}
-        self.applicationFormat = []  # format: "question:required/not:image?:points"
-
-
 def load_everything() -> list:
-    with open("storedVariables/vars.txt", 'r', encoding='utf-8') as f:
+    with open("storedVariables/servers.json", 'r', encoding='utf-8') as f:
         try:
-            jsonlist = json.load(f)  # python list of json values
+            jsonlist: dict = json.load(f)  # python list of json values
         except JSONDecodeError:
-            print("Error! Initializing empty list!")
+            logging.error("Error! Initializing empty list!")
             return []
-        print("Successfully loaded data")
-        python_server_list = []  # python list of python dict values
+        else:
+            logging.info("Successfully loaded data")
+            return [Server.from_dict(x) for x in jsonlist.get("servers")]
+
+
+'''python_server_list = []  # python list of python dict values
         for jsonserver in jsonlist:
             python_server_list.append(json.loads(jsonserver))
         class_server_list = []  # python list of Server class values to return for the ServerList
@@ -48,12 +46,17 @@ def load_everything() -> list:
             init_server.applicationFormat = server_dict.get('applicationFormat')
             class_server_list.append(init_server)
             print("Server {0} Processed. \n AppChannel:{1} \n suggestChannel:{2} \n serverAddress:{3} \n ImportantMessages: {4} \napplicationFormat: {5}".format(init_server.id, init_server.appChannel, init_server.suggestChannel, init_server.serverAddress, init_server.importantMessages, init_server.applicationFormat))
-        return class_server_list
+        return class_server_list'''
 
 
 def save_everything():
-    with open("storedVariables/vars.txt", 'w', encoding='utf-8') as f:
-        alt_server_list = []
+    with open("storedVariables/servers.json", 'w', encoding='utf-8') as f:
+        # TODO MAKE BACKUPS!
+        server_list_dict = [server.to_dict() for server in serverList]
+        json.dump({"servers": server_list_dict}, f)
+        return
+
+'''alt_server_list = []
         for serv in serverList:
             alt_shop_list = []
             print(serv.shopList)
@@ -66,26 +69,28 @@ def save_everything():
             serv.shopList = serv_shop_copy
         with open("storedVariables/vars.txt", "r", encoding="utf-8") as f2:
             backup = f2.read()
-        try:    
+        try:
             json.dump(alt_server_list, f)
         except TypeError:
             print("TypeError. Again.")
             f.write(backup)
             traceback.print_exc()
         f2.close()
-        f.close()
+        f.close()'''
 
 
 def get_server(guild_id: int) -> Server:  # get the server, if not found make a new one, save and return new one
     for serv in serverList:
-        if serv.id == guild_id:
+        if serv.guild_id == guild_id:
             return serv
     new_server = Server(guild_id)
     serverList.append(new_server)
+    save_everything()
     return new_server
 
 
-serverList = load_everything()
+serverList: List[Server] = load_everything()
+print(f"sl: {serverList}")
 
 
 class AdminCommands(commands.Cog):
@@ -234,11 +239,11 @@ class AdminCommands(commands.Cog):
                 return
 
             if message == "welcome":
-                serv.importantMessages.update({"welcome": msg})
+                serv.important_messages.update({"welcome": msg})
             elif message == "accept":
-                serv.importantMessages.update({"accept": msg})
+                serv.important_messages.update({"accept": msg})
             elif message == "deny":
-                serv.importantMessages.update({"deny": msg})
+                serv.important_messages.update({"deny": msg})
         save_everything()
 
     @commands.command(category="Admin", brief="Kick Newcomers", description="Anyone with Newcomer role will be yeeted.")
@@ -254,23 +259,16 @@ class AdminCommands(commands.Cog):
         for member in role.members:
             await member.send("You have been kicked.")
             await ctx.channel.send(member.id)
-            print("working so far")
             await ctx.guild.kick(ctx.guild.get_member(member.id))
-            print("kicked")
-
-
 
     @commands.command(category="Admin", brief=" Admin: Start a countdown",
                       description="Enter amount of hours for countdown.")
     @commands.has_any_role("admin")
     async def countdown(self, ctx, arg):
-        print("maybe working")
         global rebounding
         if rebounding == 1:
-            print("Rebounding")
             await ctx.send("One in progress!")
         rebounding = 1
-        print("yay")
         await ctx.message.delete()
         msg = await ctx.channel.send("Starting Countdown:")
         t = float(arg)
@@ -285,7 +283,6 @@ class AdminCommands(commands.Cog):
         await ctx.send("EVENT HAS STARTED")
         await msg.delete()
         rebounding = 0
-
 
     @commands.command()
     @commands.has_any_role("admin")
@@ -304,7 +301,6 @@ class AdminCommands(commands.Cog):
     @commands.command(brief="Admin: accept suggestion", description="/acceptsuggestion <messageid> <reason>")
     @commands.has_any_role("admin")
     async def acceptsuggestion(self, ctx, arg1, *, args):
-        print(arg1)
         await ctx.message.delete()
         delMessage = await ctx.fetch_message(int(arg1))
         oldSuggestion = delMessage.embeds[0].fields[0].name
@@ -323,7 +319,6 @@ class AdminCommands(commands.Cog):
         await delMessage.edit(embed=newEmbed)
 
     async def cog_command_error(self, ctx, error):
-        print("error")
         if isinstance(error, commands.MissingAnyRole):
             await ctx.send("You don't have permission to do that!")
         elif isinstance(error, commands.MissingRequiredArgument):
@@ -331,6 +326,7 @@ class AdminCommands(commands.Cog):
         else:
             await ctx.send(error)
             traceback.print_exc()
+
 
 # https://gist.github.com/OneEyedKnight/f0411f9a5e9dea23b96be0bf6dd86d2d
 def setup(bot):

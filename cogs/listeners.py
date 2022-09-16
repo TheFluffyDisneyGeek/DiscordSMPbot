@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from random import randint
-from mcstatus import MinecraftServer
 import cogs.admincommands as admin
 
 
@@ -11,14 +10,16 @@ class BotListeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-      await member.send(admin.get_server(member.guild.id).importantMessages.get("welcome"))
+        message = admin.get_server(member.guild.id).important_messages.get("welcome")
+        if message is not None:
+            await member.send(message)
 
-    #@commands.Cog.listener()
-    #async def on_message(self, message):
+
+    # @commands.Cog.listener()
+    # async def on_message(self, message):
     #    if "no u " in message.content and message.author != self.bot.user:
     #        await message.channel.send("no u")
     #    await self.bot.process_commands(message)
-    
 
 
 def setup(bot):

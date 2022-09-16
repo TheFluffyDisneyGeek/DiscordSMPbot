@@ -1,6 +1,5 @@
-Flask~=1.1.2
-discord.py
-fuzzywuzzy~=0.18.0
-mcstatus~=4.0.0
-discord~=1.0.1
-python-dotenv~=0.15.0
+Flask>=1.1.2
+fuzzywuzzy>=0.18.0
+mcstatus>=9.4.0
+python-dotenv>=0.15.0
+py-cord>=2.1.1
