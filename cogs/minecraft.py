@@ -333,7 +333,10 @@ class ShopMenuView(discord.ui.View):
 
     @discord.ui.button(label="Create Shop", style=discord.ButtonStyle.primary)
     async def create_callback(self, button, interaction: discord.Interaction):
-        await interaction.response.send_message("WIP")
+        self.data['shop_owner'] = interaction.user.id
+        self.data['guild_id'] = self.message.guild.id
+        self.get_vars()
+        await interaction.response.send_modal(ShopMenuNameModal(data=self.data))
 
     @discord.ui.button(label="Edit Shop", style=discord.ButtonStyle.primary)
     async def edit_callback(self, button, interaction: discord.Interaction):
@@ -349,9 +352,27 @@ class ShopMenuView(discord.ui.View):
 
     @discord.ui.button(label="Check Shop", style=discord.ButtonStyle.primary)
     async def check_callback(self, button, interaction: discord.Interaction):
+        # TODO add rest integration
         await interaction.response.send_message("WIP")
 
+class ShopMenuNameModal(discord.ui.Modal):
+    def __init__(self, *children: InputText, title='Shop Creation', data: dict = None):
+        self.data = data
+        super().__init__(*children, title=title)
+        self.add_item(InputText(label="Shop Name"))  # (i.e. x for <price> diamonds)
+        
 
+    async def callback(self, interaction: discord.Interaction):
+        shop_name = self.children[0].value
+        new_shop = objects.Shop(shop_name, self.data['shop_owner'])
+        self.data['server_obj'].shops.append(new_shop)
+        self.data['shop'] = new_shop
+        #  TODO VALIDATE & rerun if not validated
+        await interaction.response.edit_message(
+            content=f"Created shop {self.data['shop'].name}. Press the buttons below to edit.",
+            embed=None,
+            view=ShopEditMenuView(data=self.data))
+            
 class ShopMenuSelectNameView(discord.ui.View):
     def __init__(self, *items: Item, menu_type: Optional[str] = "", data: dict = None):
         super().__init__(*items)
@@ -378,16 +399,7 @@ class ShopMenuSelectNameView(discord.ui.View):
                 #  Set up the edit menu
                 shop = [x for x in get_shops(self.server_obj, self.shop_owner) if
                         x.name == selector.values[0]][0]
-                found = []
-                for shop_item in shop.items:
-                    found.append(f"{shop.name} | {shop_item.item}, {shop_item.amount} : {shop_item.price}")
-                    # item_list.append([shop_item.item])
-                embed = discord.Embed(title="Current items", color=0x0099ff)
-                found.sort()
-                for i in found:
-                    embed.add_field(name="".join("- " for _ in range(len(i))), value=i, inline=False)
-                if not found:
-                    embed.add_field(name="------", value="No items are in this shop.", inline=False)
+                embed = shop_item_embed(shop)
                 self.data['shop'] = shop
                 await interaction.response.edit_message(
                     content="",
@@ -402,6 +414,19 @@ class ShopMenuSelectNameView(discord.ui.View):
         elif menu_type == "check":
             pass
 
+def shop_item_embed(shop: objects.Shop):
+    found = []
+    for shop_item in shop.items:
+        found.append(f"{shop.name} | {shop_item.item}, {shop_item.amount} : {shop_item.price}")
+        # item_list.append([shop_item.item])
+    embed = discord.Embed(title="Current items", color=0x0099ff)
+    found.sort()
+    for i in found:
+        embed.add_field(name="".join("- " for _ in range(len(i))), value=i, inline=False)
+    if not found:
+        embed.add_field(name="------", value="No items are in this shop.", inline=False)
+    return embed
+    
 
 class ShopEditMenuView(discord.ui.View):
     def __init__(self, *items: Item, data: dict = None):
@@ -456,6 +481,7 @@ class ItemSelectorView(discord.ui.View):
             self.data['item_amount'] = item_obj.amount
             self.data['item_price'] = item_obj.price
             self.data['item_misc'] = 'y' if item_obj.misc_items else 'n'
+            self.data['chest'] = item_obj.chest
 
             if self.data['action'] == 'item_edit':
                 await interaction.response.send_modal(ItemAddEditModal(data=self.data))
@@ -481,19 +507,24 @@ class ItemAddEditModal(discord.ui.Modal):
         self.add_item(InputText(
             label="Misc item? <y/n>  ",  # (not one specific item sold)
             placeholder=data.get('item_misc', "")))
-        if data['server_obj'].REST_enabled:
-            pass  # TODO REST INTEGRATION
+        if self.data['server_obj'].REST_enabled:
+            self.add_item(
+            InputText(label="chest_location ", placeholder=data.get('chest_location', "")))
 
     async def callback(self, interaction: discord.Interaction):
         self.data['item_name'] = self.children[0].value
         self.data['item_amount'] = self.children[1].value
         self.data['item_price'] = self.children[2].value
         self.data['item_misc'] = self.children[3].value
+        if self.data['server_obj'].REST_enabled:
+            self.data['chest_location'] = self.children[4].value
+        
         #  TODO VALIDATE & rerun if not validated
         await interaction.response.edit_message(
             content=f"Please confirm! \nitem: {self.data['item_name']} \n"
                     f"price: {self.data['item_amount']} for {self.data['item_price']}"
-                    f"\nmisc item: {self.data['item_misc']}",
+                    f"\nmisc item: {self.data['item_misc']}" +
+                    (('\nChest Location:' + self.data['chest_location']) if self.data['server_obj'].REST_enabled else ''),
             embed=None,
             view=ConfirmActionView(data=self.data))
 
@@ -506,12 +537,17 @@ class ConfirmActionView(discord.ui.View):
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.green)
     async def yes_callback(self, button, interaction: discord.Interaction):
         if self.data['action'] == 'item_add':
-            self.data['shop'].items.append(objects.ShopItem(
+            shop_item = objects.ShopItem(
                 self.data['item_name'],
                 self.data['item_amount'],
                 self.data['item_price'],
                 self.data['item_misc'].lower().strip() == 'y'  # sneaky way to get the boolean
-            ))
+            )
+            self.data['shop'].items.append(shop_item)
+            chest_location = self.data.get("chest_location", None)
+            if chest_location:
+                split_location = chest_location.split(":")
+                shop_item.chest = objects.Chest(int(split_location[0]), int(split_location[1]), int(split_location[2]), split_location[3])
             print(self.data['shop'])
             print([shop for shop in get_shops(self.data['server_obj'], self.data['shop_owner'])])
         elif self.data['action'] == 'item_edit':
@@ -520,16 +556,16 @@ class ConfirmActionView(discord.ui.View):
             item_obj.amount = self.data['item_amount']
             item_obj.price = self.data['item_price']
             item_obj.misc_items = self.data['item_misc'].lower().strip() == 'y'
+            chest_location = self.data.get("chest_location", None)
+            if chest_location:
+                split_location = chest_location.split(":")
+                item_obj.chest = objects.Chest(int(split_location[0]), int(split_location[1]), int(split_location[2]), split_location[3])
         elif self.data['action'] == 'item_delete':
             item_obj: objects.ShopItem = [x for x in self.data['shop'].items if x.item == self.data['og_item']][0]
             self.data['shop'].items.remove(item_obj)
         elif self.data['action'] == 'shop_delete':
             admin.get_server(self.data['guild_id']).shops.remove(self.data['shop'])
-        for child in self.children:
-            print(child)
-            child.disabled = True
         await interaction.response.edit_message(content="Confirmed!", embed=None, view=None)
-        print("here!")
 
     @discord.ui.button(label="No", style=discord.ButtonStyle.danger)
     async def no_callback(self, button, interaction: discord.Interaction):
